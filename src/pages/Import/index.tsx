@@ -11,6 +11,7 @@ import { Container, Title, ImportFileContainer, Footer } from './styles';
 
 import alert from '../../assets/alert.svg';
 import api from '../../services/api';
+import forAsync from '../../utils/forAsync';
 
 interface FileProps {
   file: File;
@@ -23,19 +24,38 @@ const Import: React.FC = () => {
   const history = useHistory();
 
   async function handleUpload(): Promise<void> {
-    // const data = new FormData();
-
-    // TODO
+    const data = new FormData();
 
     try {
-      // await api.post('/transactions/import', data);
+      // const arrayPromises = uploadedFiles.map(uploadedFile => {
+      //   data.set('file', uploadedFile.file);
+      //   return api.post('/transactions/import', data);
+      // });
+
+      // for await (const uploadedFile of uploadedFiles) {
+      //   data.set('file', uploadedFile.file);
+      //   await api.post('/transactions/import', data);
+      // }
+
+      await forAsync(uploadedFiles, async uploadedFile => {
+        data.set('file', uploadedFile.file);
+        await api.post('/transactions/import', data);
+      });
+
+      history.push('/');
     } catch (err) {
-      // console.log(err.response.error);
+      console.log(err.response.error);
     }
   }
 
   function submitFile(files: File[]): void {
-    // TODO
+    const normalizedFiles = files.map(file => ({
+      file,
+      name: file.name,
+      readableSize: filesize(file.size),
+    }));
+
+    setUploadedFiles(prevState => [...prevState, ...normalizedFiles]);
   }
 
   return (
